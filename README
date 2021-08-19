@@ -1,0 +1,53 @@
+myshell用户手册
+SYNOPSIS
+	$ mysh [file]
+	myshell是一个命令解释程序，可以执行从标准输入或者文件中读取的命令。
+COPYRIGHT
+	作者：潘致远，浙江大学
+INVOCATION
+	在终端中打开mysh可执行文件，如果在命令行参数中指定了脚本文件，myshell会逐行读取命令；如果没有传入额外的命令行参数，那么myshell将从标准输入读取用户输入。当遇到EOF(Ctrl-D)时，mysh程序会停止。
+SHELL GRAMMAR
+	myshell采用如下语法格式
+		cmd [arg]* [ | cmd [arg]* ]*[[> filename][< filename][>> filename]]* [&]
+	其中，cmd [arg]* 代表命令cmd，附带着0个或更多个参数arg；[ | cmd [arg]* ]* 代表0个或更多个管道子命令。后面跟的是重定向符号及相应的文件名。最后是一个可选的 & 符号，代表让myshell在后台执行该命令。管道、重定向和后台任务详见下文。如果cmd为myshell的内部命令，该命令将在mysh程序内部执行；如果cmd为外部程序，myshell会在环境变量PATH中寻找该程序并执行。
+	例子:
+		ls -l
+		ls -l > out
+		awk -f x | sort -u < infile > outfile &
+BUILTIN COMMANDS
+	myshell集成的内部命令有：bg, cd, clr, dir, echo, environ, exec, exit, fg, help, jobs, pwd, set, shift, test, time, umask, unset
+	说明：
+	bg: bg [作业号]?	将指定或最近的进程转入后台
+	cd: cd [[-][路径]]?	更改当前工作目录，转移到指定路径，主目录或上一次到达的路径
+	clr: clr		清空终端窗口中的内容
+	dir: dir [路径]?	显示指定或当前目录下的文件
+	echo: echo [参数]	向标准输出打印输入的参数
+	set/environ: set [[名称] [参数]]?	显示所有环境变量的值，或者设置、添加环境变量的值
+	exec: exec [命令]	myshell执行输入的命令，然后退出程序
+	exit: exit		退出myshell
+	fg: fg [作业号]?	将指定或最近的进程转入前台
+	help: help		显示用户手册
+	jobs: jobs		显示myshell中活跃的进程列表
+	pwd: pwd		显示当前工作目录
+	shift: shift [偏移量] [参数 ...]	将输入的参数左移若干位后输出
+	test: test [[-nz 字符串][变量 运算符 变量]]	判断输入的条件表达式是否为真并返回结果
+	time: time		显示当前的系统时间
+	umask: umask [掩码]?		显示当前目录的umask，或将其设为新的值
+	unset: unset [名称]		删除指定的环境变量
+I/O REDIRECTION
+	> 表示将标准输出重定向到文件（覆盖写），< 表示将标准输入重定向到文件，>> 表示将标准输出重定向到文件（追加写）。重定向之后，myshell将会从文件中读/写，支持任何内部/外部命令的重定向。
+	例子:
+		ls ~ >> filelist.txt
+		wc < file1 > file2
+PIPELINE
+	管道是用 | 隔开的一系列命令。前一个命令的标准输出与后一个命令的标准输入用UNIX管道相连，即前一个命令的输出将作为后一个命令的输入，这种连接优先于重定向操作。
+	myshell支持任何内部/外部命令间的管道
+	例子:
+		ls | grep a | wc
+BACKGROUND
+	& 符号代表让myshell在后台执行该命令。命令进入后台后，myshell会立即返回命令提示符，此时可以继续在命令提示符后工作。对于后台任务，可以在作业列表(jobs命令)中跟踪，也可以使用fg或bg命令进行操作。
+	例子:
+		sleep 20 &
+RUNTIME ENVIRONMENT
+	myshell维护一张环境变量表，用户可以添加、修改、删除非保留变量。一些内部命令依赖环境变量表中的信息。
+	对于用户的输入，路径中的 ~ 字符会被替换为主目录的绝对路径，变量符号(例如$a)会被替换为变量值。
